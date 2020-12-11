@@ -433,12 +433,3 @@
 
 > 有，每个邮箱地址每天上限10条，0点刷新，正常使用完全够了，加入限制主要是 为了防止接口被滥用，毕竟这是我的私人邮箱
 
-
-# 请作者喝杯奶茶？
-
-<table>
-    <tr>
-        <td ><center><img src="https://img-blog.csdnimg.cn/20200303161837163.jpg" ></center></td>
-        <td ><center><img src="https://img-blog.csdnimg.cn/20200303162019613.png"  ></center></td>
-    </tr>
-</table>

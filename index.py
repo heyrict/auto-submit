@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import sys
 import requests
 import json
@@ -27,26 +26,30 @@ def getYmlConfig(yaml_file='config.yml'):
 
 
 # 全局配置
-config = getYmlConfig(yaml_file='config.yml')
+config = getYmlConfig(yaml_file='config_dev.yml')
 
 
 # 获取今日校园api
 def getCpdailyApis(user):
     apis = {}
     user = user['user']
-    schools = requests.get(
-        url='https://www.cpdaily.com/v6/config/guest/tenant/list', verify=not debug).json()['data']
+    # schools = requests.get(
+    #     url='https://www.cpdaily.com/v6/config/guest/tenant/list', verify=not debug).json()['data']
+    ret = requests.get(url='https://static.campushoy.com/apicache/tenantListSort').json()['data']
+    schools = [j for i in ret for j in i['datas']]
     flag = True
     for one in schools:
         if one['name'] == user['school']:
-            if one['joinType'] == 'NONE':
-                log(user['school'] + ' 未加入今日校园')
-                exit(-1)
+            # if one['joinType'] == 'NONE':
+            #     log(user['school'] + ' 未加入今日校园')
+            #     exit(-1)
             flag = False
             params = {
                 'ids': one['id']
             }
-            res = requests.get(url='https://www.cpdaily.com/v6/config/guest/tenant/info', params=params,
+            # res = requests.get(url='https://www.cpdaily.com/v6/config/guest/tenant/info', params=params,
+            #                    verify=not debug)
+            res = requests.get(url='https://mobile.campushoy.com/v6/config/guest/tenant/info', params=params,
                                verify=not debug)
             data = res.json()['data'][0]
             joinType = data['joinType']
@@ -158,7 +161,10 @@ def queryForm(session, apis):
         {"pageSize": 100, "pageNumber": 1, "formWid": formWid, "collectorWid": collectWid}), verify=not debug)
 
     form = res.json()['datas']['rows']
-    return {'collectWid': collectWid, 'formWid': formWid, 'schoolTaskWid': schoolTaskWid, 'form': form}
+    required_form = list(filter(lambda x: x['isRequired'] == 1, form))
+    with open('./required_selected.json', 'w') as f:
+        f.write(json.dumps(required_form))
+    return {'collectWid': collectWid, 'formWid': formWid, 'schoolTaskWid': schoolTaskWid, 'form': required_form}
 
 
 # 填写form
@@ -213,7 +219,7 @@ def uploadPicture(session, image, host):
     url = 'https://{host}/wec-counselor-collector-apps/stu/collector/getStsAccess'.format(
         host=host)
     res = session.post(url=url, headers={
-                       'content-type': 'application/json'}, data=json.dumps({}), verify=not debug)
+        'content-type': 'application/json'}, data=json.dumps({}), verify=not debug)
     datas = res.json().get('datas')
     fileName = datas.get('fileName')
     accessKeyId = datas.get('accessKeyId')
@@ -226,7 +232,7 @@ def uploadPicture(session, image, host):
     with open(image, "rb") as f:
         data = f.read()
     bucket.put_object(key=fileName, headers={
-                      'x-oss-security-token': securityToken}, data=data)
+        'x-oss-security-token': securityToken}, data=data)
     res = bucket.sign_url('PUT', fileName, 60)
     # log(res)
     return fileName
@@ -240,7 +246,7 @@ def getPictureUrl(session, fileName, host):
         'ossKey': fileName
     }
     res = session.post(url=url, headers={
-                       'content-type': 'application/json'}, data=json.dumps(data), verify=not debug)
+        'content-type': 'application/json'}, data=json.dumps(data), verify=not debug)
     photoUrl = res.json().get('datas')
     return photoUrl
 
@@ -270,7 +276,9 @@ def submitForm(formWid, address, collectWid, schoolTaskWid, form, session, host)
     msg = r.json()['message']
     return msg
 
+
 title_text = '今日校园疫结果通知'
+
 
 # 发送邮件通知
 def sendMessage(send, msg):
@@ -286,55 +294,66 @@ def sendMessage(send, msg):
             log('发送邮件通知失败。。。')
             log(res.json())
 
-def sendEmail(send,msg):
-    my_sender= config['Info']['Email']['account']   # 发件人邮箱账号
-    my_pass = config['Info']['Email']['password']         # 发件人邮箱密码
-    my_user = send      # 收件人邮箱账号，我这边发送给自己
-    try:
-        msg=MIMEText(getTimeStr() + str(msg),'plain','utf-8')
-        msg['From']=formataddr(["FromRunoob",my_sender])  # 括号里的对应发件人邮箱昵称、发件人邮箱账号
-        msg['To']=formataddr(["FK",my_user])              # 括号里的对应收件人邮箱昵称、收件人邮箱账号
-        msg['Subject']=title_text               # 邮件的主题，也可以说是标题
 
-        server=smtplib.SMTP_SSL(config['Info']['Email']['server'], config['Info']['Email']['port'])  # 发件人邮箱中的SMTP服务器，端口是25
+def sendEmail(send, msg):
+    my_sender = config['Info']['Email']['account']  # 发件人邮箱账号
+    my_pass = config['Info']['Email']['password']  # 发件人邮箱密码
+    my_user = send  # 收件人邮箱账号，我这边发送给自己
+    try:
+        msg = MIMEText(getTimeStr() + str(msg), 'plain', 'utf-8')
+        msg['From'] = formataddr(["FromRunoob", my_sender])  # 括号里的对应发件人邮箱昵称、发件人邮箱账号
+        msg['To'] = formataddr(["FK", my_user])  # 括号里的对应收件人邮箱昵称、收件人邮箱账号
+        msg['Subject'] = title_text  # 邮件的主题，也可以说是标题
+
+        server = smtplib.SMTP_SSL(config['Info']['Email']['server'],
+                                  config['Info']['Email']['port'])  # 发件人邮箱中的SMTP服务器，端口是25
         server.login(my_sender, my_pass)  # 括号中对应的是发件人邮箱账号、邮箱密码
-        server.sendmail(my_sender,[my_user,],msg.as_string())  # 括号中对应的是发件人邮箱账号、收件人邮箱账号、发送邮件
+        server.sendmail(my_sender, [my_user, ], msg.as_string())  # 括号中对应的是发件人邮箱账号、收件人邮箱账号、发送邮件
         server.quit()  # 关闭连接
     except Exception:  # 如果 try 中的语句没有执行，则会执行下面的 ret=False
         log("邮件发送失败")
-    else: print("邮件发送成功")
+    else:
+        print("邮件发送成功")
+
 
 # server酱通知
 def sendServerChan(msg):
     log('正在发送Server酱。。。')
     res = requests.post(url='https://sc.ftqq.com/{0}.send'.format(config['Info']['ServerChan']),
-                            data={'text': title_text, 'desp': getTimeStr() + "\n" + str(msg)})
+                        data={'text': title_text, 'desp': getTimeStr() + "\n" + str(msg)})
     code = res.json()['errmsg']
     if code == 'success':
         log('发送Server酱通知成功。。。')
     else:
         log('发送Server酱通知失败。。。')
-        log('Server酱返回结果'+code)
+        log('Server酱返回结果' + code)
+
 
 # Qmsg酱通知
 def sendQmsgChan(msg):
     log('正在发送Qmsg酱。。。')
     res = requests.post(url='https://qmsg.zendee.cn:443/send/{0}'.format(config['Info']['Qsmg']),
-                            data={'msg': title_text + '\n时间：' + getTimeStr() + "\n 返回结果：" + str(msg)})
+                        data={'msg': title_text + '\n时间：' + getTimeStr() + "\n 返回结果：" + str(msg)})
     code = res.json()['success']
     if code:
         log('发送Qmsg酱通知成功。。。')
     else:
         log('发送Qmsg酱通知失败。。。')
-        log('Qmsg酱返回结果'+code)
+        log('Qmsg酱返回结果' + code)
+
 
 # 综合提交
 def InfoSubmit(msg, send=None):
-    if(None != send):
-        if(config['Info']['Email']['enable']): sendEmail(send,msg)
-        else: sendMessage(send, msg)
-    if(config['Info']['ServerChan']): sendServerChan(msg)
-    if(config['Info']['Qsmg']): sendQmsgChan(msg)
+    log('InfoSubmit: {}'.format(msg))
+    '''
+    if (None != send):
+        if (config['Info']['Email']['enable']):
+            sendEmail(send, msg)
+        else:
+            sendMessage(send, msg)
+    if (config['Info']['ServerChan']): sendServerChan(msg)
+    if (config['Info']['Qsmg']): sendQmsgChan(msg)
+    '''
 
 
 def main_handler(event, context):
@@ -377,7 +396,7 @@ def main_handler(event, context):
                 log('原因可能是学号或密码错误，请检查配置后，重启脚本。。。')
                 exit(-1)
     except Exception as e:
-        InfoSubmit("出现问题了！"+str(e))
+        InfoSubmit("出现问题了！" + str(e))
         raise e
     else:
         return 'success'
