@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import sys
 import requests
 import json
@@ -6,14 +7,16 @@ import oss2
 from urllib.parse import urlparse
 from datetime import datetime, timedelta, timezone
 from urllib3.exceptions import InsecureRequestWarning
-import smtplib
-from email.mime.text import MIMEText
-from email.utils import formataddr
 
 # debug模式
+filename = './config.yml' if len(sys.argv) <= 1 else sys.argv[1]
+TEST = 1 if len(sys.argv) <= 2 else sys.argv[2]
 debug = False
 if debug:
     requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+
+print('Your config is: {}'.format(filename))
+print('TEST mode is {}'.format(TEST))
 
 
 # 读取yml配置
@@ -26,7 +29,7 @@ def getYmlConfig(yaml_file='config.yml'):
 
 
 # 全局配置
-config = getYmlConfig(yaml_file='config_dev.yml')
+config = getYmlConfig(yaml_file=filename)
 
 
 # 获取今日校园api
@@ -163,7 +166,7 @@ def queryForm(session, apis):
     form = res.json()['datas']['rows']
     required_form = list(filter(lambda x: x['isRequired'] == 1, form))
     with open('./required_selected.json', 'w') as f:
-        f.write(json.dumps(required_form))
+        f.write(json.dumps(required_form,ensure_ascii=False))
     return {'collectWid': collectWid, 'formWid': formWid, 'schoolTaskWid': schoolTaskWid, 'form': required_form}
 
 
@@ -280,80 +283,9 @@ def submitForm(formWid, address, collectWid, schoolTaskWid, form, session, host)
 title_text = '今日校园疫结果通知'
 
 
-# 发送邮件通知
-def sendMessage(send, msg):
-    if send != '':
-        log('正在发送邮件通知。。。')
-        res = requests.post(url='http://www.zimo.wiki:8080/mail-sender/sendMail',
-                            data={'title': title_text, 'content': getTimeStr() + str(msg), 'to': send})
-
-        code = res.json()['code']
-        if code == 0:
-            log('发送邮件通知成功。。。')
-        else:
-            log('发送邮件通知失败。。。')
-            log(res.json())
-
-
-def sendEmail(send, msg):
-    my_sender = config['Info']['Email']['account']  # 发件人邮箱账号
-    my_pass = config['Info']['Email']['password']  # 发件人邮箱密码
-    my_user = send  # 收件人邮箱账号，我这边发送给自己
-    try:
-        msg = MIMEText(getTimeStr() + str(msg), 'plain', 'utf-8')
-        msg['From'] = formataddr(["FromRunoob", my_sender])  # 括号里的对应发件人邮箱昵称、发件人邮箱账号
-        msg['To'] = formataddr(["FK", my_user])  # 括号里的对应收件人邮箱昵称、收件人邮箱账号
-        msg['Subject'] = title_text  # 邮件的主题，也可以说是标题
-
-        server = smtplib.SMTP_SSL(config['Info']['Email']['server'],
-                                  config['Info']['Email']['port'])  # 发件人邮箱中的SMTP服务器，端口是25
-        server.login(my_sender, my_pass)  # 括号中对应的是发件人邮箱账号、邮箱密码
-        server.sendmail(my_sender, [my_user, ], msg.as_string())  # 括号中对应的是发件人邮箱账号、收件人邮箱账号、发送邮件
-        server.quit()  # 关闭连接
-    except Exception:  # 如果 try 中的语句没有执行，则会执行下面的 ret=False
-        log("邮件发送失败")
-    else:
-        print("邮件发送成功")
-
-
-# server酱通知
-def sendServerChan(msg):
-    log('正在发送Server酱。。。')
-    res = requests.post(url='https://sc.ftqq.com/{0}.send'.format(config['Info']['ServerChan']),
-                        data={'text': title_text, 'desp': getTimeStr() + "\n" + str(msg)})
-    code = res.json()['errmsg']
-    if code == 'success':
-        log('发送Server酱通知成功。。。')
-    else:
-        log('发送Server酱通知失败。。。')
-        log('Server酱返回结果' + code)
-
-
-# Qmsg酱通知
-def sendQmsgChan(msg):
-    log('正在发送Qmsg酱。。。')
-    res = requests.post(url='https://qmsg.zendee.cn:443/send/{0}'.format(config['Info']['Qsmg']),
-                        data={'msg': title_text + '\n时间：' + getTimeStr() + "\n 返回结果：" + str(msg)})
-    code = res.json()['success']
-    if code:
-        log('发送Qmsg酱通知成功。。。')
-    else:
-        log('发送Qmsg酱通知失败。。。')
-        log('Qmsg酱返回结果' + code)
-
-
 # 综合提交
 def InfoSubmit(msg, send=None):
     log('InfoSubmit: {}'.format(msg))
-    '''
-    if (None != send):
-        if (config['Info']['Email']['enable']):
-            sendEmail(send, msg)
-        else:
-            sendMessage(send, msg)
-    if (config['Info']['ServerChan']): sendServerChan(msg)
-    if (config['Info']['Qsmg']): sendQmsgChan(msg)
-    '''
 
 
 def main_handler(event, context):
@@ -376,6 +308,8 @@ def main_handler(event, context):
                 log('正在自动填写问卷。。。')
                 form = fillForm(session, params['form'], apis['host'])
                 log('填写问卷成功。。。')
+                if TEST == 1:
+                    sys.exit(1)
                 log('正在自动提交。。。')
                 msg = submitForm(params['formWid'], user['user']['address'], params['collectWid'],
                                  params['schoolTaskWid'], form, session, apis['host'])
@@ -384,7 +318,6 @@ def main_handler(event, context):
                     InfoSubmit('自动提交成功！', user['user']['email'])
                 elif msg == '该收集已填写无需再次填写':
                     log('今日已提交！')
-                    # InfoSubmit('今日已提交！', user['user']['email'])
                     InfoSubmit('今日已提交！')
                 else:
                     log('自动提交失败。。。')
