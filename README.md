@@ -16,6 +16,22 @@
 
 #### 因为一些原因，今日校园疫情收集表，签到，查寝等相关项目不再维护和更新
 
+# 快速上手
+
+如果你只使用而非关注细节，可按照如下步骤完成并忽略后文:
+
+1. 下载dist/index（linux版）
+2. 拷贝并修改config.yml到某个目录
+3. 运行`./index /your/path/config.yml 0`
+   * `/your/path/config.yml`: 是修改后的config.yml保存位置
+   * `0`: 代表关闭测试模式，设为`1`，则列出填好后的表单，不提交
+   
+4. \[option\]添加命令到linux触发器`crontab -e`，每日10点01分完成提交
+
+```shell
+01 10 * * * /home/xxx/index /your/path/config.yml 0 >> ~/applogs/cronb
+```
+
 # 项目说明
 
 - `config.yml` 默认配置文件
