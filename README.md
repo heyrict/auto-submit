@@ -26,10 +26,10 @@
    * `/your/path/config.yml`: 是修改后的config.yml保存位置
    * `0`: 代表关闭测试模式，设为`1`，则列出填好后的表单，不提交
    
-4. \[option\]添加命令到linux触发器`crontab -e`，每日10点01分完成提交
+4. \[option\]添加命令到linux触发器`crontab -e`，每日09、12、18点30分各尝试提交一次（有时辅导员偷懒，晚发布）
 
 ```shell
-01 10 * * * /home/xxx/index /your/path/config.yml 0 >> ~/applogs/cronb
+30 09,12,18 * * * /home/xxx/index /home/xxx/config.yml 0 >> /home/xxx/daliysubmit.log 2>&1
 ```
 
 # 项目说明

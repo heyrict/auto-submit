@@ -45,7 +45,7 @@ def getCpdailyApis(user):
         if one['name'] == user['school']:
             # if one['joinType'] == 'NONE':
             #     log(user['school'] + ' 未加入今日校园')
-            #     exit(-1)
+            #     sys.exit(-1)
             flag = False
             params = {
                 'ids': one['id']
@@ -79,7 +79,7 @@ def getCpdailyApis(user):
             break
     if flag:
         log(user['school'] + ' 未找到该院校信息，请检查是否是学校全称错误')
-        exit(-1)
+        sys.exit(-1)
     log(apis)
     return apis
 
@@ -179,7 +179,7 @@ def fillForm(session, form, host):
             default = config['cpdaily']['defaults'][sort - 1]['default']
             if formItem['title'] != default['title']:
                 log('第%d个默认配置不正确，请检查' % sort)
-                exit(-1)
+                sys.exit(-1)
             # 文本直接赋值
             if formItem['fieldType'] == 1 or formItem['fieldType'] == 5:
                 formItem['value'] = default['value']
@@ -303,7 +303,7 @@ def main_handler(event, context):
                 if str(params) == 'None':
                     log('获取最新待填写问卷失败，可能是辅导员还没有发布。。。')
                     InfoSubmit('没有新问卷')
-                    exit(-1)
+                    sys.exit(-1)
                 log('查询最新待填写问卷成功。。。')
                 log('正在自动填写问卷。。。')
                 form = fillForm(session, params['form'], apis['host'])
@@ -323,11 +323,11 @@ def main_handler(event, context):
                     log('自动提交失败。。。')
                     log('错误是' + msg)
                     InfoSubmit('自动提交失败！错误是' + msg, user['user']['email'])
-                    exit(-1)
+                    sys.exit(-1)
             else:
                 log('模拟登陆失败。。。')
                 log('原因可能是学号或密码错误，请检查配置后，重启脚本。。。')
-                exit(-1)
+                sys.exit(-1)
     except Exception as e:
         InfoSubmit("出现问题了！" + str(e))
         raise e
