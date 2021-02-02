@@ -13,7 +13,7 @@ user = config['user']
 extension = {
     "lon": user['lon'],
     "model": "PCRT00",
-    "appVersion": "8.0.8",
+    "appVersion": "8.2.14",
     "systemVersion": "4.4.4",
     "userId": user['username'],
     "systemName": "android",

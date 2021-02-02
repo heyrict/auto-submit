@@ -132,7 +132,7 @@ def queryForm(session, apis):
     host = apis['host']
     headers = {
         'Accept': 'application/json, text/plain, */*',
-        'User-Agent': 'Mozilla/5.0 (Linux; Android 4.4.4; OPPO R11 Plus Build/KTU84P) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/33.0.0.0 Safari/537.36 yiban/8.1.11 cpdaily/8.1.11 wisedu/8.1.11',
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 4.4.4; OPPO R11 Plus Build/KTU84P) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/33.0.0.0 Safari/537.36 yiban/8.2.14 cpdaily/8.2.14 wisedu/8.2.14',
         'content-type': 'application/json',
         'Accept-Encoding': 'gzip,deflate',
         'Accept-Language': 'zh-CN,en-US;q=0.8',
@@ -260,7 +260,7 @@ def submitForm(formWid, address, collectWid, schoolTaskWid, form, session, host)
         'User-Agent': 'Mozilla/5.0 (Linux; Android 4.4.4; OPPO R11 Plus Build/KTU84P) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/33.0.0.0 Safari/537.36 okhttp/3.12.4',
         'CpdailyStandAlone': '0',
         'extension': '1',
-        'Cpdaily-Extension': '1wAXD2TvR72sQ8u+0Dw8Dr1Qo1jhbem8Nr+LOE6xdiqxKKuj5sXbDTrOWcaf v1X35UtZdUfxokyuIKD4mPPw5LwwsQXbVZ0Q+sXnuKEpPOtk2KDzQoQ89KVs gslxPICKmyfvEpl58eloAZSZpaLc3ifgciGw+PIdB6vOsm2H6KSbwD8FpjY3 3Tprn2s5jeHOp/3GcSdmiFLYwYXjBt7pwgd/ERR3HiBfCgGGTclquQz+tgjJ PdnDjA==',
+        'Cpdaily-Extension': 'DdU824D41owubsfab36hiIHQzRhEmdOUiGzj+VU0IPgBCIHPsNOC+MlVpSoOqWebu2NjR/BBmyvlpTlqh+MFifLlsR222l+zodlIP9AIR7D1ZISnkUQdRb9hqebZlvxuFMHkKmEIamXg8SJ+d4irx5an0d+L1zcDRB9YPYZbObBZb03f1Q5oGQQvlY0wm7xHXXeGtLbxQCB6vqzLKLf1YCHSEnr53JV++aKTDS/jHxH9Bu5DIgtjv4Gn43yh0+ijKQ8PdkVHZLc=',
         'Content-Type': 'application/json; charset=utf-8',
         # 请注意这个应该和配置文件中的host保持一致
         'Host': host,
@@ -270,7 +270,7 @@ def submitForm(formWid, address, collectWid, schoolTaskWid, form, session, host)
 
     # 默认正常的提交参数json
     params = {"formWid": formWid, "address": address, "collectWid": collectWid, "schoolTaskWid": schoolTaskWid,
-              "form": form}
+              "form": form, "uaIsCpadaily": True}
     # print(params)
     submitForm = 'https://{host}/wec-counselor-collector-apps/stu/collector/submitForm'.format(
         host=host)
