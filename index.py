@@ -3,10 +3,13 @@ import sys
 import requests
 import json
 import yaml
-import oss2
 from urllib.parse import urlparse
 from datetime import datetime, timedelta, timezone
 from urllib3.exceptions import InsecureRequestWarning
+
+from email.mime.text import MIMEText
+from email.utils import formataddr
+import smtplib
 
 # debug模式
 filename = './config.yml' if len(sys.argv) <= 1 else sys.argv[1]
@@ -17,6 +20,24 @@ if debug:
 
 print('Your config is: {}'.format(filename))
 print('TEST mode is {}'.format(TEST))
+
+
+def sendEmail(send,msg):
+    my_sender= config['Info']['Email']['account']   # 发件人邮箱账号
+    my_pass = config['Info']['Email']['password']         # 发件人邮箱密码
+    try:
+        msg=MIMEText(getTimeStr() + str(msg),'plain','utf-8')
+        msg['From']=formataddr(["结果通知",my_sender])  # 括号里的对应发件人邮箱昵称、发件人邮箱账号
+        msg['To']=formataddr(["heyrict",send])              # 括号里的对应收件人邮箱昵称、收件人邮箱账号
+        msg['Subject']=title_text               # 邮件的主题，也可以说是标题
+
+        server=smtplib.SMTP_SSL(config['Info']['Email']['server'], config['Info']['Email']['port'])  # 发件人邮箱中的SMTP服务器，端口是25
+        server.login(my_sender, my_pass)  # 括号中对应的是发件人邮箱账号、邮箱密码
+        server.sendmail(my_sender,[send,],msg.as_string())  # 括号中对应的是发件人邮箱账号、收件人邮箱账号、发送邮件
+        server.quit()  # 关闭连接
+    except Exception as e:  # 如果 try 中的语句没有执行，则会执行下面的 ret=False
+        log(f"邮件发送失败: {e}")
+    else: print("邮件发送成功")
 
 
 # 读取yml配置
@@ -219,6 +240,8 @@ def fillForm(session, form, host):
 
 # 上传图片到阿里云oss
 def uploadPicture(session, image, host):
+    import oss2
+
     url = 'https://{host}/wec-counselor-collector-apps/stu/collector/getStsAccess'.format(
         host=host)
     res = session.post(url=url, headers={
@@ -286,6 +309,8 @@ title_text = '今日校园疫结果通知'
 # 综合提交
 def InfoSubmit(msg, send=None):
     log('InfoSubmit: {}'.format(msg))
+    if(send is not None):
+        if(config['Info']['Email']['enable']): sendEmail(send,msg)
 
 
 def main_handler(event, context):
