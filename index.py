@@ -200,7 +200,7 @@ def fillForm(session, form, host):
             default = config['cpdaily']['defaults'][sort - 1]['default']
             if formItem['title'] != default['title']:
                 log('第%d个默认配置不正确，请检查' % sort)
-                sys.exit(-1)
+                raise Exception("第%d个默认配置不正确，请检查")
             # 文本直接赋值
             if formItem['fieldType'] == 1 or formItem['fieldType'] == 5:
                 formItem['value'] = default['value']
@@ -331,7 +331,11 @@ def main_handler(event, context):
                     sys.exit(-1)
                 log('查询最新待填写问卷成功。。。')
                 log('正在自动填写问卷。。。')
-                form = fillForm(session, params['form'], apis['host'])
+                try:
+                    form = fillForm(session, params['form'], apis['host'])
+                except Exception as e:
+                    InfoSubmit('自动提交失败！原因： %s' % e, user['user']['email'])
+                    sys.exit(-1)
                 log('填写问卷成功。。。')
                 if TEST == 1:
                     sys.exit(1)
