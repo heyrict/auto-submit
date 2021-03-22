@@ -74,6 +74,14 @@ def getCpdailyApis(user):
             # res = requests.get(url='https://www.cpdaily.com/v6/config/guest/tenant/info', params=params,
             #                    verify=not debug)
             res = requests.get(url='https://mobile.campushoy.com/v6/config/guest/tenant/info', params=params,
+                               headers={
+                                   'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:86.0) Gecko/20100101 Firefox/86.0',
+                                   'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                                   'Accept-Language': 'en-US,en;q=0.5',
+                                   'Accept-Encoding': 'gzip, deflate, br',
+                                   'Connection': 'keep-alive',
+                                   'Upgrade-Insecure-Requests': '1',
+                               },
                                verify=not debug)
             data = res.json()['data'][0]
             joinType = data['joinType']
